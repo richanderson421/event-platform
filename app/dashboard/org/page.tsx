@@ -1,29 +1,131 @@
-import { redirect } from 'next/navigation';
-import { getCurrentUser } from '@/lib/auth/session';
-import { prisma } from '@/lib/db';
+'use client';
 
-export default async function OrgDashboard() {
-  const user = await getCurrentUser();
-  if (!user) redirect('/auth/sign-in');
+import { useEffect, useState } from 'react';
 
-  const memberships = await prisma.orgMembership.findMany({
-    where: { userId: user.id, status: 'ACTIVE' },
-    include: { organization: { include: { events: true } } }
-  });
+type Membership = {
+  id: string;
+  role: 'ORG_ADMIN' | 'EDITOR' | 'VIEWER';
+  organization: {
+    id: string;
+    name: string;
+    events: { id: string; name: string; state: string }[];
+    joinRequests: { id: string; user: { email: string }; createdAt: string }[];
+  };
+};
+
+export default function OrgDashboard() {
+  const [memberships, setMemberships] = useState<Membership[]>([]);
+  const [status, setStatus] = useState('');
+
+  async function load() {
+    const res = await fetch('/api/me/orgs');
+    if (res.ok) {
+      const data = await res.json();
+      setMemberships(data.memberships || []);
+    }
+  }
+
+  useEffect(() => {
+    load();
+  }, []);
+
+  async function createOrg(formData: FormData) {
+    setStatus('Creating org...');
+    const name = String(formData.get('org_name') || '');
+    const res = await fetch('/api/orgs', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ name })
+    });
+    setStatus(res.ok ? 'Org created' : 'Create org failed');
+    await load();
+  }
+
+  async function createLeague(orgId: string, formData: FormData) {
+    setStatus('Creating league...');
+    const name = String(formData.get('league_name') || 'New League');
+    const res = await fetch(`/api/orgs/${orgId}/events`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ name, visibility: 'PUBLIC', registrationMode: 'APPROVAL_REQUIRED' })
+    });
+    setStatus(res.ok ? 'League created' : 'Create league failed');
+    await load();
+  }
+
+  async function setState(eventId: string, nextState: string) {
+    const res = await fetch(`/api/events/${eventId}/state`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ nextState })
+    });
+    setStatus(res.ok ? `Moved to ${nextState}` : `State change failed`);
+    await load();
+  }
+
+  async function approveJoin(orgId: string, requestId: string) {
+    const res = await fetch(`/api/orgs/${orgId}/join-requests`, {
+      method: 'PATCH',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ requestId, status: 'APPROVED', role: 'EDITOR', userType: 'JUDGE' })
+    });
+    setStatus(res.ok ? 'Join approved' : 'Approve failed');
+    await load();
+  }
 
   return (
     <main>
-      <h2>Org Dashboard</h2>
-      {memberships.length === 0 && <p>You are not an org member.</p>}
+      <h2>Org Dashboard (Pass 1)</h2>
+      <p>{status}</p>
+
+      <form action={createOrg} style={{ marginBottom: 16 }}>
+        <input name="org_name" placeholder="New Organization name" required />
+        <button type="submit">Create Organization</button>
+      </form>
+
+      {memberships.length === 0 && <p>No org memberships yet.</p>}
+
       {memberships.map((m) => (
-        <section key={m.id} style={{ marginBottom: 16 }}>
+        <section key={m.id} style={{ border: '1px solid #ddd', padding: 12, marginBottom: 12 }}>
           <h3>{m.organization.name}</h3>
-          <p>Role: {m.role} {m.userType ? `(${m.userType})` : ''}</p>
+          <p>Role: {m.role}</p>
+
+          {(m.role === 'ORG_ADMIN' || m.role === 'EDITOR') && (
+            <form action={(fd) => createLeague(m.organization.id, fd)} style={{ marginBottom: 10 }}>
+              <input name="league_name" placeholder="League name" required />
+              <button type="submit">Create League</button>
+            </form>
+          )}
+
+          <h4>Events</h4>
           <ul>
             {m.organization.events.map((e) => (
-              <li key={e.id}>{e.name} — {e.state}</li>
+              <li key={e.id}>
+                {e.name} — {e.state}{' '}
+                {(m.role === 'ORG_ADMIN' || m.role === 'EDITOR') && (
+                  <>
+                    <button onClick={() => setState(e.id, 'PUBLISHED')}>Publish</button>{' '}
+                    <button onClick={() => setState(e.id, 'REGISTRATION_OPEN')}>Open Reg</button>{' '}
+                    <button onClick={() => setState(e.id, 'IN_PROGRESS')}>Start</button>
+                  </>
+                )}
+              </li>
             ))}
           </ul>
+
+          {m.role === 'ORG_ADMIN' && (
+            <>
+              <h4>Pending join requests</h4>
+              <ul>
+                {m.organization.joinRequests.map((jr) => (
+                  <li key={jr.id}>
+                    {jr.user.email}{' '}
+                    <button onClick={() => approveJoin(m.organization.id, jr.id)}>Approve as Editor/Judge</button>
+                  </li>
+                ))}
+              </ul>
+            </>
+          )}
         </section>
       ))}
     </main>
