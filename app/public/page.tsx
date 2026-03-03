@@ -24,18 +24,27 @@ export default function PublicEventsPage() {
   }
 
   return (
-    <main>
-      <h2>Public Leagues</h2>
-      <p>{status}</p>
-      <ul>
+    <main className="stack">
+      <section className="card">
+        <h2>Public Leagues</h2>
+        <p className="muted">Discover active leagues and register quickly.</p>
+        {status && <p>{status}</p>}
+      </section>
+      <section className="stack">
         {events.map((e) => (
-          <li key={e.id} style={{ marginBottom: 12 }}>
-            <strong>{e.name}</strong> — {e.organization.name}<br />
-            State: {e.state} · Players: {e.registrations.filter((r) => r.status === 'APPROVED').length}{' '}
-            <button onClick={() => join(e.id)}>Join</button>
-          </li>
+          <article key={e.id} className="card">
+            <h3>{e.name}</h3>
+            <p className="muted">{e.organization.name}</p>
+            <div className="row">
+              <span className="badge">{e.state}</span>
+              <span className="badge">Players {e.registrations.filter((r) => r.status === 'APPROVED').length}</span>
+            </div>
+            <div style={{ marginTop: 8 }}>
+              <button className="primary" onClick={() => join(e.id)}>Join League</button>
+            </div>
+          </article>
         ))}
-      </ul>
+      </section>
     </main>
   );
 }

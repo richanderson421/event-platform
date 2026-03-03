@@ -74,26 +74,30 @@ export default function OrgDashboard() {
   }
 
   return (
-    <main>
-      <h2>Org Dashboard (Pass 1)</h2>
-      <p>{status}</p>
+    <main className="stack">
+      <section className="card">
+        <h2>Org Dashboard</h2>
+        <p className="muted">Create organizations and manage leagues from one place.</p>
+        {status && <p>{status}</p>}
+        <form action={createOrg} className="row">
+          <input name="org_name" placeholder="New Organization name" required />
+          <button className="primary" type="submit">Create Organization</button>
+        </form>
+      </section>
 
-      <form action={createOrg} style={{ marginBottom: 16 }}>
-        <input name="org_name" placeholder="New Organization name" required />
-        <button type="submit">Create Organization</button>
-      </form>
-
-      {memberships.length === 0 && <p>No org memberships yet.</p>}
+      {memberships.length === 0 && <section className="card"><p>No org memberships yet.</p></section>}
 
       {memberships.map((m) => (
-        <section key={m.id} style={{ border: '1px solid #ddd', padding: 12, marginBottom: 12 }}>
-          <h3>{m.organization.name}</h3>
-          <p>Role: {m.role}</p>
+        <section key={m.id} className="card stack">
+          <div className="row">
+            <h3>{m.organization.name}</h3>
+            <span className="badge">{m.role}</span>
+          </div>
 
           {(m.role === 'ORG_ADMIN' || m.role === 'EDITOR') && (
-            <form action={(fd) => createLeague(m.organization.id, fd)} style={{ marginBottom: 10 }}>
+            <form action={(fd) => createLeague(m.organization.id, fd)} className="row">
               <input name="league_name" placeholder="League name" required />
-              <button type="submit">Create League</button>
+              <button className="primary" type="submit">Create League</button>
             </form>
           )}
 
@@ -101,13 +105,13 @@ export default function OrgDashboard() {
           <ul>
             {m.organization.events.map((e) => (
               <li key={e.id}>
-                {e.name} — {e.state}{' '}
+                <strong>{e.name}</strong> <span className="badge">{e.state}</span>{' '}
                 {(m.role === 'ORG_ADMIN' || m.role === 'EDITOR') && (
-                  <>
-                    <button onClick={() => setState(e.id, 'PUBLISHED')}>Publish</button>{' '}
-                    <button onClick={() => setState(e.id, 'REGISTRATION_OPEN')}>Open Reg</button>{' '}
+                  <span className="row" style={{ display: 'inline-flex' }}>
+                    <button onClick={() => setState(e.id, 'PUBLISHED')}>Publish</button>
+                    <button onClick={() => setState(e.id, 'REGISTRATION_OPEN')}>Open Reg</button>
                     <button onClick={() => setState(e.id, 'IN_PROGRESS')}>Start</button>
-                  </>
+                  </span>
                 )}
               </li>
             ))}

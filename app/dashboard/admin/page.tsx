@@ -14,13 +14,20 @@ export default async function AdminDashboard() {
   ]);
 
   return (
-    <main>
-      <h2>Platform Admin Dashboard</h2>
-      <p>Organizations: {orgs.length} · Users: {users.length}</p>
-      <h3>Recent Audit Logs</h3>
-      <ul>
-        {logs.map((l) => <li key={l.id}>{l.action} · {l.targetType}:{l.targetId}</li>)}
-      </ul>
+    <main className="stack">
+      <section className="card">
+        <h2>Platform Admin Dashboard</h2>
+        <div className="row">
+          <span className="badge">Organizations: {orgs.length}</span>
+          <span className="badge">Users: {users.length}</span>
+        </div>
+      </section>
+      <section className="card">
+        <h3>Recent Audit Logs</h3>
+        <ul>
+          {logs.map((l) => <li key={l.id}>{l.action} · {l.targetType}:{l.targetId}</li>)}
+        </ul>
+      </section>
     </main>
   );
 }
