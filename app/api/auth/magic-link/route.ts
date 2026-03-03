@@ -16,7 +16,7 @@ export async function POST(req: NextRequest) {
     email = email.trim().toLowerCase();
     if (!email) return NextResponse.json({ error: 'Email required' }, { status: 400 });
 
-    const user = await prisma.user.findUnique({ where: { email } });
+    const user = await prisma.user.findFirst({ where: { email: { equals: email, mode: 'insensitive' } } });
     if (!user) return NextResponse.json({ ok: true });
 
     const token = randomToken(24);
