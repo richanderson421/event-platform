@@ -23,7 +23,6 @@ export default async function AppShell({ children }: { children: React.ReactNode
             <Link className="btn" href="/dashboard/admin">Admin</Link>
             {user && (
               <form className="row" action="/api/auth/mode" method="post">
-                <input type="hidden" name="redirectTo" value="/" />
                 <select name="mode" defaultValue={mode} style={{ width: 130 }}>
                   {allowedModes.includes('PLAYER') && <option value="PLAYER">Player</option>}
                   {allowedModes.includes('ORG') && <option value="ORG">TO/Org</option>}
