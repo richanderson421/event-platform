@@ -10,7 +10,15 @@ export async function GET() {
       include: {
         organization: {
           include: {
-            events: { orderBy: { createdAt: 'desc' } },
+            events: {
+              orderBy: { createdAt: 'desc' },
+              include: {
+                registrations: {
+                  where: { status: 'APPROVED' },
+                  include: { player: { select: { displayName: true, email: true } } }
+                }
+              }
+            },
             joinRequests: { where: { status: 'PENDING' }, include: { user: true }, orderBy: { createdAt: 'desc' } }
           }
         }

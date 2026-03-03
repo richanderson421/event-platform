@@ -8,7 +8,13 @@ type Membership = {
   organization: {
     id: string;
     name: string;
-    events: { id: string; name: string; state: string }[];
+    events: {
+      id: string;
+      name: string;
+      state: string;
+      playerCap: number | null;
+      registrations: { player: { displayName: string; email: string } }[];
+    }[];
     joinRequests: { id: string; user: { email: string }; createdAt: string }[];
   };
 };
@@ -104,14 +110,24 @@ export default function OrgDashboard() {
           <h4>Events</h4>
           <ul>
             {m.organization.events.map((e) => (
-              <li key={e.id}>
-                <strong>{e.name}</strong> <span className="badge">{e.state}</span>{' '}
+              <li key={e.id} className="stack" style={{ marginBottom: 10 }}>
+                <div>
+                  <strong>{e.name}</strong> <span className="badge">{e.state}</span>{' '}
+                  <span className="badge">
+                    {e.registrations.length}/{e.playerCap ?? '∞'} signed up
+                  </span>
+                </div>
                 {(m.role === 'ORG_ADMIN' || m.role === 'EDITOR') && (
-                  <span className="row" style={{ display: 'inline-flex' }}>
+                  <div className="row">
                     <button onClick={() => setState(e.id, 'PUBLISHED')}>Publish</button>
                     <button onClick={() => setState(e.id, 'REGISTRATION_OPEN')}>Open Reg</button>
                     <button onClick={() => setState(e.id, 'IN_PROGRESS')}>Start</button>
-                  </span>
+                  </div>
+                )}
+                {(m.role === 'ORG_ADMIN' || m.role === 'EDITOR') && e.registrations.length > 0 && (
+                  <div className="muted" style={{ fontSize: 14 }}>
+                    Players: {e.registrations.map((r) => r.player.displayName).join(', ')}
+                  </div>
                 )}
               </li>
             ))}

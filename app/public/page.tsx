@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 
-type EventRow = { id: string; name: string; state: string; organization: { name: string }; registrations: { status: string }[] };
+type EventRow = { id: string; name: string; state: string; playerCap: number | null; organization: { name: string }; registrations: { status: string }[] };
 
 export default function PublicEventsPage() {
   const [events, setEvents] = useState<EventRow[]>([]);
@@ -37,7 +37,7 @@ export default function PublicEventsPage() {
             <p className="muted">{e.organization.name}</p>
             <div className="row">
               <span className="badge">{e.state}</span>
-              <span className="badge">Players {e.registrations.filter((r) => r.status === 'APPROVED').length}</span>
+              <span className="badge">Players {e.registrations.filter((r) => r.status === 'APPROVED').length}/{e.playerCap ?? '∞'}</span>
             </div>
             <div style={{ marginTop: 8 }}>
               <button className="primary" onClick={() => join(e.id)}>Join League</button>
