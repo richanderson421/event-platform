@@ -22,14 +22,20 @@ export default async function PlayerDashboard() {
   });
 
   return (
-    <main>
-      <h2>Player Dashboard</h2>
-      <p>Signed in as <strong>{user.displayName}</strong> ({user.email})</p>
-      <p><Link href="/public">Browse events</Link></p>
-      <h3>My Registrations</h3>
-      <ul>{regs.map((r) => <li key={r.id}>{r.event.name} — {r.status}</li>)}</ul>
-      <h3>Active Matches</h3>
-      <ul>{matches.map((m) => <li key={m.id}>{m.event.name} — {m.status}</li>)}</ul>
+    <main className="stack">
+      <section className="card">
+        <h2>Player Dashboard</h2>
+        <p className="muted">Signed in as <strong>{user.displayName}</strong> ({user.email})</p>
+        <p><Link className="btn" href="/public">Browse events</Link></p>
+      </section>
+      <section className="card">
+        <h3>My Registrations</h3>
+        <ul>{regs.map((r) => <li key={r.id}>{r.event.name} — {r.status}</li>)}</ul>
+      </section>
+      <section className="card">
+        <h3>Active Matches</h3>
+        <ul>{matches.map((m) => <li key={m.id}>{m.event.name} — {m.status}</li>)}</ul>
+      </section>
     </main>
   );
 }

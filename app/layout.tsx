@@ -1,7 +1,12 @@
+import './styles.css';
+import AppShell from '@/components/AppShell';
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body style={{ fontFamily: 'system-ui', margin: 0, padding: 16 }}>{children}</body>
+      <body>
+        <AppShell>{children}</AppShell>
+      </body>
     </html>
   );
 }

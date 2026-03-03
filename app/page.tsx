@@ -2,16 +2,15 @@ import Link from 'next/link';
 
 export default function Home() {
   return (
-    <main>
-      <h1>LGS League MVP</h1>
-      <p>Mobile-first event platform for local game stores.</p>
-      <ul>
-        <li><Link href="/auth/sign-in">Sign in with magic link</Link></li>
-        <li><Link href="/public">Browse events</Link></li>
-        <li><Link href="/dashboard/player">Player dashboard</Link></li>
-        <li><Link href="/dashboard/org">Organization dashboard</Link></li>
-        <li><Link href="/dashboard/admin">Platform admin dashboard</Link></li>
-      </ul>
+    <main className="stack">
+      <section className="card">
+        <h1>Event Platform MVP</h1>
+        <p className="muted">Clean, mobile-first tooling for local game store leagues.</p>
+        <div className="row">
+          <Link className="btn primary" href="/auth/sign-in">Sign in</Link>
+          <Link className="btn" href="/public">Browse events</Link>
+        </div>
+      </section>
     </main>
   );
 }
