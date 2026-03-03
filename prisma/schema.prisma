@@ -7,48 +7,130 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-enum GlobalRole { PLATFORM_ADMIN USER }
-enum OrgRole { ORG_ADMIN EDITOR VIEWER }
-enum OrgUserType { TO JUDGE }
-enum MembershipStatus { ACTIVE SUSPENDED BANNED }
-enum OrgJoinStatus { PENDING APPROVED DENIED }
-enum EventType { LEAGUE SWISS_TOURNAMENT SINGLE_ELIMINATION }
-enum EventState { DRAFT PUBLISHED REGISTRATION_OPEN IN_PROGRESS COMPLETED ARCHIVED CANCELLED }
-enum Visibility { PUBLIC PRIVATE }
-enum RegistrationMode { OPEN APPROVAL_REQUIRED }
-enum RegistrationStatus { PENDING APPROVED DENIED WAITLISTED DROPPED }
-enum PairingStatus { PENDING_APPROVAL ACTIVE }
-enum MatchOutcome { PLAYER1_WIN PLAYER2_WIN TIE BYE }
-enum MatchStatus { OPEN NEEDS_RESOLUTION CONFIRMED }
-enum ResultSource { AUTO_CONFIRMED ORGANIZER_OVERRIDE }
+enum GlobalRole {
+  PLATFORM_ADMIN
+  USER
+}
+
+enum OrgRole {
+  ORG_ADMIN
+  EDITOR
+  VIEWER
+}
+
+enum OrgUserType {
+  TO
+  JUDGE
+}
+
+enum MembershipStatus {
+  ACTIVE
+  SUSPENDED
+  BANNED
+}
+
+enum OrgJoinStatus {
+  PENDING
+  APPROVED
+  DENIED
+}
+
+enum EventType {
+  LEAGUE
+  SWISS_TOURNAMENT
+  SINGLE_ELIMINATION
+}
+
+enum EventState {
+  DRAFT
+  PUBLISHED
+  REGISTRATION_OPEN
+  IN_PROGRESS
+  COMPLETED
+  ARCHIVED
+  CANCELLED
+}
+
+enum Visibility {
+  PUBLIC
+  PRIVATE
+}
+
+enum RegistrationMode {
+  OPEN
+  APPROVAL_REQUIRED
+}
+
+enum RegistrationStatus {
+  PENDING
+  APPROVED
+  DENIED
+  WAITLISTED
+  DROPPED
+}
+
+enum PairingStatus {
+  PENDING_APPROVAL
+  ACTIVE
+}
+
+enum MatchOutcome {
+  PLAYER1_WIN
+  PLAYER2_WIN
+  TIE
+  BYE
+}
+
+enum MatchStatus {
+  OPEN
+  NEEDS_RESOLUTION
+  CONFIRMED
+}
+
+enum ResultSource {
+  AUTO_CONFIRMED
+  ORGANIZER_OVERRIDE
+}
 
 enum AuditAction {
-  ORG_CREATED ORG_JOIN_REQUESTED ORG_JOIN_APPROVED ORG_JOIN_DENIED
-  MEMBERSHIP_UPDATED USER_SUSPENDED USER_BANNED
-  EVENT_CREATED EVENT_UPDATED EVENT_STATE_CHANGED EVENT_MOVED
-  PAIRINGS_GENERATED PAIRINGS_APPROVED
-  MATCH_REPORTED MATCH_CONFIRMED MATCH_DISPUTED MATCH_OVERRIDDEN
+  ORG_CREATED
+  ORG_JOIN_REQUESTED
+  ORG_JOIN_APPROVED
+  ORG_JOIN_DENIED
+  MEMBERSHIP_UPDATED
+  USER_SUSPENDED
+  USER_BANNED
+  EVENT_CREATED
+  EVENT_UPDATED
+  EVENT_STATE_CHANGED
+  EVENT_MOVED
+  PAIRINGS_GENERATED
+  PAIRINGS_APPROVED
+  MATCH_REPORTED
+  MATCH_CONFIRMED
+  MATCH_DISPUTED
+  MATCH_OVERRIDDEN
 }
 
 model User {
-  id           String @id @default(cuid())
-  email        String @unique
-  displayName  String @unique
-  globalRole   GlobalRole @default(USER)
-  bannedAt     DateTime?
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id          String     @id @default(cuid())
+  email       String     @unique
+  displayName String     @unique
+  globalRole  GlobalRole @default(USER)
+  bannedAt    DateTime?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
 
   memberships   OrgMembership[]
   joinRequests  OrgJoinRequest[]
   registrations Registration[]
   reports       MatchReport[]
-  auditLogs     AuditLog[] @relation("AuditActor")
+  auditLogs     AuditLog[]       @relation("AuditActor")
 }
 
 model Organization {
-  id          String @id @default(cuid())
-  name        String @unique
+  id          String   @id @default(cuid())
+  name        String   @unique
   description String?
   createdById String
   createdAt   DateTime @default(now())
@@ -60,13 +142,13 @@ model Organization {
 }
 
 model OrgMembership {
-  id             String @id @default(cuid())
+  id             String           @id @default(cuid())
   organizationId String
   userId         String
   role           OrgRole
   userType       OrgUserType?
   status         MembershipStatus @default(ACTIVE)
-  createdAt      DateTime @default(now())
+  createdAt      DateTime         @default(now())
 
   organization Organization @relation(fields: [organizationId], references: [id])
   user         User         @relation(fields: [userId], references: [id])
@@ -75,12 +157,12 @@ model OrgMembership {
 }
 
 model OrgJoinRequest {
-  id             String @id @default(cuid())
+  id             String        @id @default(cuid())
   organizationId String
   userId         String
   message        String?
   status         OrgJoinStatus @default(PENDING)
-  createdAt      DateTime @default(now())
+  createdAt      DateTime      @default(now())
   reviewedAt     DateTime?
 
   organization Organization @relation(fields: [organizationId], references: [id])
@@ -88,136 +170,137 @@ model OrgJoinRequest {
 }
 
 model Event {
-  id               String @id @default(cuid())
-  organizationId   String
-  createdById      String
-  type             EventType
-  state            EventState @default(DRAFT)
-  name             String
-  description      String?
-  visibility       Visibility @default(PUBLIC)
-  location         String?
-  registrationMode RegistrationMode @default(OPEN)
-  playerCap        Int?
-  waitlistEnabled  Boolean @default(true)
-  inviteToken      String @unique @default(cuid())
-  pairingsRequireApproval Boolean @default(true)
-  movedFromOrgId   String?
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  id                       String           @id @default(cuid())
+  organizationId           String
+  createdById              String
+  type                     EventType
+  state                    EventState       @default(DRAFT)
+  name                     String
+  description              String?
+  visibility               Visibility       @default(PUBLIC)
+  location                 String?
+  registrationMode         RegistrationMode @default(OPEN)
+  playerCap                Int?
+  waitlistEnabled          Boolean          @default(true)
+  inviteToken              String           @unique @default(cuid())
+  pairingsRequireApproval  Boolean          @default(true)
+  movedFromOrgId           String?
+  createdAt                DateTime         @default(now())
+  updatedAt                DateTime         @updatedAt
 
-  organization Organization @relation(fields: [organizationId], references: [id])
-  leagueConfig LeagueConfig?
-  periods      LeaguePeriod[]
+  organization  Organization @relation(fields: [organizationId], references: [id])
+  leagueConfig  LeagueConfig?
+  periods       LeaguePeriod[]
   registrations Registration[]
-  matches      Match[]
+  matches       Match[]
 }
 
 model LeagueConfig {
-  id                String @id @default(cuid())
-  eventId           String @unique
-  matchesPerPeriod  Int @default(1)
-  periodLengthDays  Int @default(7)
-  endDate           DateTime?
-  numberOfPeriods   Int?
-  scoringWin        Int @default(3)
-  scoringTie        Int @default(1)
-  scoringLoss       Int @default(0)
+  id               String   @id @default(cuid())
+  eventId          String   @unique
+  matchesPerPeriod Int      @default(1)
+  periodLengthDays Int      @default(7)
+  endDate          DateTime?
+  numberOfPeriods  Int?
+  scoringWin       Int      @default(3)
+  scoringTie       Int      @default(1)
+  scoringLoss      Int      @default(0)
 
   event Event @relation(fields: [eventId], references: [id])
 }
 
 model LeaguePeriod {
-  id         String @id @default(cuid())
-  eventId    String
-  periodNo   Int
-  startsAt   DateTime
-  endsAt     DateTime
-  createdAt  DateTime @default(now())
+  id        String   @id @default(cuid())
+  eventId   String
+  periodNo  Int
+  startsAt  DateTime
+  endsAt    DateTime
+  createdAt DateTime @default(now())
 
-  event      Event @relation(fields: [eventId], references: [id])
-  pairings   Pairing[]
+  event    Event     @relation(fields: [eventId], references: [id])
+  pairings Pairing[]
+  matches  Match[]
 
   @@unique([eventId, periodNo])
 }
 
 model Pairing {
-  id            String @id @default(cuid())
-  periodId      String
-  player1Id     String
-  player2Id     String?
-  tableNumber   Int
-  status        PairingStatus @default(PENDING_APPROVAL)
-  byeAssigned   Boolean @default(false)
-  createdAt     DateTime @default(now())
+  id          String        @id @default(cuid())
+  periodId    String
+  player1Id   String
+  player2Id   String?
+  tableNumber Int
+  status      PairingStatus @default(PENDING_APPROVAL)
+  byeAssigned Boolean       @default(false)
+  createdAt   DateTime      @default(now())
 
-  period  LeaguePeriod @relation(fields: [periodId], references: [id])
-  match   Match?
+  period LeaguePeriod @relation(fields: [periodId], references: [id])
+  match  Match?
 
   @@unique([periodId, tableNumber])
 }
 
 model Match {
-  id             String @id @default(cuid())
+  id             String       @id @default(cuid())
   eventId        String
   periodId       String
-  pairingId      String @unique
+  pairingId      String       @unique
   player1Id      String
   player2Id      String?
-  status         MatchStatus @default(OPEN)
+  status         MatchStatus  @default(OPEN)
   outcome        MatchOutcome?
   confirmedAt    DateTime?
   resolutionNote String?
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
 
-  event   Event @relation(fields: [eventId], references: [id])
+  event   Event        @relation(fields: [eventId], references: [id])
   period  LeaguePeriod @relation(fields: [periodId], references: [id])
-  pairing Pairing @relation(fields: [pairingId], references: [id])
+  pairing Pairing      @relation(fields: [pairingId], references: [id])
   reports MatchReport[]
   result  MatchResult?
 }
 
 model MatchReport {
-  id            String @id @default(cuid())
-  matchId        String
-  reporterId     String
+  id              String       @id @default(cuid())
+  matchId         String
+  reporterId      String
   reportedOutcome MatchOutcome
-  createdAt      DateTime @default(now())
+  createdAt       DateTime     @default(now())
 
-  match     Match @relation(fields: [matchId], references: [id])
-  reporter  User  @relation(fields: [reporterId], references: [id])
+  match    Match @relation(fields: [matchId], references: [id])
+  reporter User  @relation(fields: [reporterId], references: [id])
 
   @@unique([matchId, reporterId])
 }
 
 model MatchResult {
-  id           String @id @default(cuid())
-  matchId       String @unique
-  outcome       MatchOutcome
-  source        ResultSource
-  setByUserId   String?
-  createdAt     DateTime @default(now())
+  id         String       @id @default(cuid())
+  matchId    String       @unique
+  outcome    MatchOutcome
+  source     ResultSource
+  setByUserId String?
+  createdAt  DateTime     @default(now())
 
   match Match @relation(fields: [matchId], references: [id])
 }
 
 model Registration {
-  id          String @id @default(cuid())
-  eventId     String
-  playerId    String
-  status      RegistrationStatus @default(PENDING)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id        String             @id @default(cuid())
+  eventId   String
+  playerId  String
+  status    RegistrationStatus @default(PENDING)
+  createdAt DateTime           @default(now())
+  updatedAt DateTime           @updatedAt
 
-  event       Event @relation(fields: [eventId], references: [id])
-  player      User  @relation(fields: [playerId], references: [id])
+  event  Event @relation(fields: [eventId], references: [id])
+  player User  @relation(fields: [playerId], references: [id])
 
   @@unique([eventId, playerId])
 }
 
 model AuditLog {
-  id             String @id @default(cuid())
+  id             String      @id @default(cuid())
   action         AuditAction
   actorUserId    String?
   organizationId String?
@@ -225,7 +308,7 @@ model AuditLog {
   targetType     String
   targetId       String
   metadata       Json
-  createdAt      DateTime @default(now())
+  createdAt      DateTime    @default(now())
 
   actor User? @relation("AuditActor", fields: [actorUserId], references: [id])
 }
