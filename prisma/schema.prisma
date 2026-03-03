@@ -121,11 +121,13 @@ model User {
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
 
-  memberships   OrgMembership[]
-  joinRequests  OrgJoinRequest[]
-  registrations Registration[]
-  reports       MatchReport[]
-  auditLogs     AuditLog[]       @relation("AuditActor")
+  memberships      OrgMembership[]
+  joinRequests     OrgJoinRequest[]
+  registrations    Registration[]
+  reports          MatchReport[]
+  auditLogs        AuditLog[]       @relation("AuditActor")
+  magicLinkTokens  MagicLinkToken[]
+  sessions         Session[]
 }
 
 model Organization {
@@ -311,4 +313,25 @@ model AuditLog {
   createdAt      DateTime    @default(now())
 
   actor User? @relation("AuditActor", fields: [actorUserId], references: [id])
+}
+
+model MagicLinkToken {
+  id         String   @id @default(cuid())
+  tokenHash  String   @unique
+  userId     String
+  expiresAt  DateTime
+  usedAt     DateTime?
+  createdAt  DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+}
+
+model Session {
+  id          String   @id @default(cuid())
+  sessionHash String   @unique
+  userId      String
+  expiresAt   DateTime
+  createdAt   DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
 }

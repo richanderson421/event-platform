@@ -18,10 +18,16 @@ Production-ready MVP for multi-tenant local game store events.
 
 ## Deploy (Vercel + Neon)
 1. Create Neon Postgres database.
-2. Set Vercel env vars: `DATABASE_URL`, `APP_URL`, `MAGIC_LINK_SECRET`.
+2. Set Vercel env vars: `DATABASE_URL`, `APP_URL`, `MAGIC_LINK_SECRET`, `RESEND_API_KEY`, `EMAIL_FROM`.
 3. `npm run build` locally to verify.
 4. Push to GitHub and import into Vercel.
-5. Run migrations in CI or `vercel build` hook.
+5. Run migrations in CI or via `prisma migrate deploy` in a post-deploy job.
+
+## Working Magic-Link Login
+- Visit `/auth/sign-in` and submit a known email.
+- The API issues a 15-minute one-time token and emails the callback link via Resend.
+- Callback consumes token, creates DB-backed session, and sets an httpOnly cookie.
+- Seeded test users: `admin@platform.test`, `to@store.test`, `player@store.test`.
 
 ## State Machine
 Allowed transitions:

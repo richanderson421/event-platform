@@ -6,6 +6,7 @@ export default function Home() {
       <h1>LGS League MVP</h1>
       <p>Mobile-first event platform for local game stores.</p>
       <ul>
+        <li><Link href="/auth/sign-in">Sign in with magic link</Link></li>
         <li><Link href="/public">Browse events</Link></li>
         <li><Link href="/dashboard/player">Player dashboard</Link></li>
         <li><Link href="/dashboard/org">Organization dashboard</Link></li>
