@@ -28,3 +28,13 @@ export async function requireOrgAdmin(orgId: string) {
   if (!membership || membership.status !== 'ACTIVE' || membership.role !== 'ORG_ADMIN') throw new Error('FORBIDDEN');
   return user;
 }
+
+export async function requireOrgCreator() {
+  const user = await requireUser();
+  if (user.globalRole === 'PLATFORM_ADMIN') return user;
+  const toMembership = await prisma.orgMembership.findFirst({
+    where: { userId: user.id, status: 'ACTIVE', userType: 'TO' }
+  });
+  if (!toMembership) throw new Error('FORBIDDEN');
+  return user;
+}

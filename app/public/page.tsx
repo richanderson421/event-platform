@@ -9,7 +9,7 @@ export default function PublicEventsPage() {
   const [status, setStatus] = useState('');
 
   async function load() {
-    const res = await fetch('/api/public/events');
+    const res = await fetch('/api/public/events', { cache: 'no-store' });
     if (res.ok) {
       const data = await res.json();
       setEvents(data.events || []);

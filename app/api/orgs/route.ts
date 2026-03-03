@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { requireUser } from '@/lib/auth/guards';
+import { requireOrgCreator } from '@/lib/auth/guards';
 
 export async function POST(req: NextRequest) {
   try {
-    const user = await requireUser();
+    const user = await requireOrgCreator();
     const body = await req.json();
     const name = String(body.name || '').trim();
     const description = String(body.description || '').trim() || null;
