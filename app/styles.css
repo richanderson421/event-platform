@@ -84,3 +84,22 @@ button.primary, .btn.primary {
   z-index: 50;
   overflow-y: auto;
 }
+
+.event-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.state-badge {
+  border-width: 2px;
+}
+
+.state-outline-blue { border-color: #2563eb; color: #1d4ed8; }
+.state-outline-amber { border-color: #d97706; color: #92400e; }
+.state-outline-green { border-color: #16a34a; color: #166534; }
+.state-outline-purple { border-color: #9333ea; color: #6b21a8; }
+.state-outline-red { border-color: #dc2626; color: #991b1b; }
+.state-outline-slate { border-color: #64748b; color: #334155; }

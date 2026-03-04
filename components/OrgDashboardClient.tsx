@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from 'react';
 
+type MatchOutcome = 'PLAYER1_WIN' | 'PLAYER2_WIN' | 'TIE' | 'BYE';
+
 type Membership = {
   id: string;
   role: 'ORG_ADMIN' | 'EDITOR' | 'VIEWER';
@@ -13,7 +15,14 @@ type Membership = {
       name: string;
       state: string;
       playerCap: number | null;
-      registrations: { id: string; status: string; player: { displayName: string; email: string } }[];
+      registrations: { id: string; playerId: string; status: string; player: { displayName: string; email: string } }[];
+      matches: {
+        id: string;
+        status: string;
+        outcome: MatchOutcome | null;
+        player1Id: string;
+        player2Id: string | null;
+      }[];
     }[];
     joinRequests: { id: string; user: { email: string }; createdAt: string }[];
   };
@@ -23,6 +32,27 @@ type RosterDrawerState = {
   eventName: string;
   players: { displayName: string; email: string }[];
 } | null;
+
+function stateMeta(state: string) {
+  switch (state) {
+    case 'DRAFT':
+      return { className: 'state-outline-blue', next: 'Recommended next: Publish' };
+    case 'PUBLISHED':
+      return { className: 'state-outline-amber', next: 'Recommended next: Open registration' };
+    case 'REGISTRATION_OPEN':
+      return { className: 'state-outline-green', next: 'Recommended next: Start league once players are approved' };
+    case 'IN_PROGRESS':
+      return { className: 'state-outline-purple', next: 'Recommended next: Report and resolve matches' };
+    case 'COMPLETED':
+      return { className: 'state-outline-slate', next: 'Recommended next: Archive when ready' };
+    case 'CANCELLED':
+      return { className: 'state-outline-red', next: 'Recommended next: Archive to finalize' };
+    case 'ARCHIVED':
+      return { className: 'state-outline-slate', next: 'Final state' };
+    default:
+      return { className: 'state-outline-slate', next: 'Review state progression' };
+  }
+}
 
 export default function OrgDashboardClient() {
   const [memberships, setMemberships] = useState<Membership[]>([]);
@@ -110,6 +140,23 @@ export default function OrgDashboardClient() {
     await load();
   }
 
+  async function resolveMatch(matchId: string, outcome: MatchOutcome) {
+    const res = await fetch(`/api/matches/${matchId}/resolve`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ outcome })
+    });
+
+    let message = res.ok ? 'Match result saved' : 'Failed to save match result';
+    try {
+      const data = await res.json();
+      if (!res.ok && data?.error) message = data.error;
+    } catch {}
+
+    setStatus(message);
+    await load();
+  }
+
   return (
     <>
       <main className="stack">
@@ -144,18 +191,35 @@ export default function OrgDashboardClient() {
               {m.organization.events.map((e) => {
                 const approvedPlayers = e.registrations.filter((r) => r.status === 'APPROVED').map((r) => r.player);
                 const pendingRegistrations = e.registrations.filter((r) => r.status === 'PENDING');
+                const activeMatches = e.matches.filter((match) => match.status === 'OPEN' || match.status === 'NEEDS_RESOLUTION');
+                const byUserId = new Map(
+                  e.registrations.map((r) => [r.playerId, r.player.displayName])
+                );
+                const meta = stateMeta(e.state);
+
+                const nameFor = (playerId: string | null) => {
+                  if (!playerId) return 'BYE';
+                  return byUserId.get(playerId) || `${playerId.slice(0, 8)}...`;
+                };
 
                 return (
                   <li key={e.id} className="stack" style={{ marginBottom: 10 }}>
-                    <div>
-                      <strong>{e.name}</strong> <span className="badge">{e.state}</span>{' '}
-                      <span className="badge">
-                        {approvedPlayers.length}/{e.playerCap ?? '∞'} approved
-                      </span>
-                      {pendingRegistrations.length > 0 && (
-                        <span className="badge">{pendingRegistrations.length} pending</span>
-                      )}
+                    <div className="event-header">
+                      <div>
+                        <strong>{e.name}</strong>
+                      </div>
+                      <div className="row">
+                        <span className={`badge state-badge ${meta.className}`}>{e.state}</span>
+                        <span className="badge">
+                          {approvedPlayers.length}/{e.playerCap ?? '∞'} approved
+                        </span>
+                        {pendingRegistrations.length > 0 && (
+                          <span className="badge">{pendingRegistrations.length} pending</span>
+                        )}
+                      </div>
                     </div>
+                    <p className="muted" style={{ marginTop: -4 }}>{meta.next}</p>
+
                     {(m.role === 'ORG_ADMIN' || m.role === 'EDITOR') && (
                       <div className="row">
                         <button onClick={() => setState(e.id, 'PUBLISHED')}>Publish</button>
@@ -184,6 +248,32 @@ export default function OrgDashboardClient() {
                             </li>
                           ))}
                         </ul>
+                      </div>
+                    )}
+
+                    {(m.role === 'ORG_ADMIN' || m.role === 'EDITOR') && e.state === 'IN_PROGRESS' && (
+                      <div className="stack">
+                        <h4 style={{ marginBottom: 0 }}>Match Desk</h4>
+                        {activeMatches.length === 0 ? (
+                          <p className="muted">No pending matches right now.</p>
+                        ) : (
+                          <ul>
+                            {activeMatches.map((match) => (
+                              <li key={match.id} className="stack" style={{ marginBottom: 8 }}>
+                                <div>
+                                  <strong>{nameFor(match.player1Id)}</strong> vs <strong>{nameFor(match.player2Id)}</strong>{' '}
+                                  <span className="badge">{match.status}</span>
+                                </div>
+                                <div className="row">
+                                  <button onClick={() => resolveMatch(match.id, 'PLAYER1_WIN')}>P1 Win</button>
+                                  <button onClick={() => resolveMatch(match.id, 'PLAYER2_WIN')}>P2 Win</button>
+                                  <button onClick={() => resolveMatch(match.id, 'TIE')}>Tie</button>
+                                  <button onClick={() => resolveMatch(match.id, 'BYE')}>Bye</button>
+                                </div>
+                              </li>
+                            ))}
+                          </ul>
+                        )}
                       </div>
                     )}
                   </li>

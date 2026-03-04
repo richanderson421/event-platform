@@ -15,6 +15,17 @@ export async function GET() {
               registrations: {
                 include: { player: { select: { displayName: true, email: true } } },
                 orderBy: { createdAt: 'desc' }
+              },
+              matches: {
+                orderBy: { createdAt: 'desc' },
+                select: {
+                  id: true,
+                  status: true,
+                  outcome: true,
+                  player1Id: true,
+                  player2Id: true,
+                  createdAt: true
+                }
               }
             }
           },
@@ -43,6 +54,17 @@ export async function GET() {
                 registrations: {
                   include: { player: { select: { displayName: true, email: true } } },
                   orderBy: { createdAt: 'desc' }
+                },
+                matches: {
+                  orderBy: { createdAt: 'desc' },
+                  select: {
+                    id: true,
+                    status: true,
+                    outcome: true,
+                    player1Id: true,
+                    player2Id: true,
+                    createdAt: true
+                  }
                 }
               }
             },
