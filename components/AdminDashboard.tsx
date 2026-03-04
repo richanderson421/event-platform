@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { getCurrentUser } from '@/lib/auth/session';
 import { prisma } from '@/lib/db';
@@ -28,9 +29,11 @@ export default async function AdminDashboard() {
     <main className="stack">
       <section className="card">
         <h2>Platform Admin Dashboard</h2>
+        <p className="muted">Full-platform visibility and controls.</p>
         <div className="row">
           <span className="badge">Organizations: {orgs.length}</span>
           <span className="badge">Users: {users.length}</span>
+          <Link className="btn primary" href="/dashboard/org">Open Organizer-style view</Link>
         </div>
       </section>
       <section className="card">
