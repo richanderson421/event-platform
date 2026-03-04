@@ -13,7 +13,7 @@ type Membership = {
       name: string;
       state: string;
       playerCap: number | null;
-      registrations: { player: { displayName: string; email: string } }[];
+      registrations: { id: string; status: string; player: { displayName: string; email: string } }[];
     }[];
     joinRequests: { id: string; user: { email: string }; createdAt: string }[];
   };
@@ -85,6 +85,16 @@ export default function OrgDashboardClient() {
     await load();
   }
 
+  async function updateRegistration(eventId: string, registrationId: string, nextStatus: 'APPROVED' | 'DENIED') {
+    const res = await fetch(`/api/events/${eventId}/registrations`, {
+      method: 'PATCH',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ registrationId, status: nextStatus })
+    });
+    setStatus(res.ok ? `Registration ${nextStatus.toLowerCase()}` : 'Registration update failed');
+    await load();
+  }
+
   return (
     <>
       <main className="stack">
@@ -116,31 +126,54 @@ export default function OrgDashboardClient() {
 
             <h4>Events</h4>
             <ul>
-              {m.organization.events.map((e) => (
-                <li key={e.id} className="stack" style={{ marginBottom: 10 }}>
-                  <div>
-                    <strong>{e.name}</strong> <span className="badge">{e.state}</span>{' '}
-                    <span className="badge">
-                      {e.registrations.length}/{e.playerCap ?? '∞'} signed up
-                    </span>
-                  </div>
-                  {(m.role === 'ORG_ADMIN' || m.role === 'EDITOR') && (
-                    <div className="row">
-                      <button onClick={() => setState(e.id, 'PUBLISHED')}>Publish</button>
-                      <button onClick={() => setState(e.id, 'REGISTRATION_OPEN')}>Open Reg</button>
-                      <button onClick={() => setState(e.id, 'IN_PROGRESS')}>Start</button>
-                      <button
-                        onClick={() => setRosterDrawer({
-                          eventName: e.name,
-                          players: e.registrations.map((r) => r.player)
-                        })}
-                      >
-                        View Roster
-                      </button>
+              {m.organization.events.map((e) => {
+                const approvedPlayers = e.registrations.filter((r) => r.status === 'APPROVED').map((r) => r.player);
+                const pendingRegistrations = e.registrations.filter((r) => r.status === 'PENDING');
+
+                return (
+                  <li key={e.id} className="stack" style={{ marginBottom: 10 }}>
+                    <div>
+                      <strong>{e.name}</strong> <span className="badge">{e.state}</span>{' '}
+                      <span className="badge">
+                        {approvedPlayers.length}/{e.playerCap ?? '∞'} approved
+                      </span>
+                      {pendingRegistrations.length > 0 && (
+                        <span className="badge">{pendingRegistrations.length} pending</span>
+                      )}
                     </div>
-                  )}
-                </li>
-              ))}
+                    {(m.role === 'ORG_ADMIN' || m.role === 'EDITOR') && (
+                      <div className="row">
+                        <button onClick={() => setState(e.id, 'PUBLISHED')}>Publish</button>
+                        <button onClick={() => setState(e.id, 'REGISTRATION_OPEN')}>Open Reg</button>
+                        <button onClick={() => setState(e.id, 'IN_PROGRESS')}>Start</button>
+                        <button
+                          onClick={() => setRosterDrawer({
+                            eventName: e.name,
+                            players: approvedPlayers
+                          })}
+                        >
+                          View Roster
+                        </button>
+                      </div>
+                    )}
+
+                    {(m.role === 'ORG_ADMIN' || m.role === 'EDITOR') && pendingRegistrations.length > 0 && (
+                      <div className="stack">
+                        <h4 style={{ marginBottom: 0 }}>Pending registrations</h4>
+                        <ul>
+                          {pendingRegistrations.map((reg) => (
+                            <li key={reg.id}>
+                              <strong>{reg.player.displayName}</strong> <span className="muted">({reg.player.email})</span>{' '}
+                              <button onClick={() => updateRegistration(e.id, reg.id, 'APPROVED')}>Approve</button>{' '}
+                              <button onClick={() => updateRegistration(e.id, reg.id, 'DENIED')}>Deny</button>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </li>
+                );
+              })}
             </ul>
 
             {m.role === 'ORG_ADMIN' && (

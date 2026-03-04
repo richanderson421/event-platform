@@ -13,8 +13,8 @@ export async function GET() {
             orderBy: { createdAt: 'desc' },
             include: {
               registrations: {
-                where: { status: 'APPROVED' },
-                include: { player: { select: { displayName: true, email: true } } }
+                include: { player: { select: { displayName: true, email: true } } },
+                orderBy: { createdAt: 'desc' }
               }
             }
           },
@@ -41,8 +41,8 @@ export async function GET() {
               orderBy: { createdAt: 'desc' },
               include: {
                 registrations: {
-                  where: { status: 'APPROVED' },
-                  include: { player: { select: { displayName: true, email: true } } }
+                  include: { player: { select: { displayName: true, email: true } } },
+                  orderBy: { createdAt: 'desc' }
                 }
               }
             },
