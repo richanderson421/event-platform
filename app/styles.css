@@ -64,3 +64,23 @@ button.primary, .btn.primary {
 
 .nav-links { display: flex; gap: 8px; flex-wrap: wrap; }
 .badge { font-size: 12px; color: var(--muted); border: 1px solid var(--line); border-radius: 999px; padding: 2px 8px; }
+
+.drawer-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(17, 24, 39, 0.35);
+  z-index: 40;
+}
+
+.drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: min(420px, 92vw);
+  height: 100vh;
+  background: var(--card);
+  border-left: 1px solid var(--line);
+  padding: 16px;
+  z-index: 50;
+  overflow-y: auto;
+}
