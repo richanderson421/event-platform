@@ -71,7 +71,22 @@ export default function OrgDashboardClient() {
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ nextState })
     });
-    setStatus(res.ok ? `Moved to ${nextState}` : 'State change failed');
+
+    let message = '';
+    try {
+      const data = await res.json();
+      if (res.ok) {
+        message = `Moved from ${data.fromState ?? 'previous'} to ${data.toState ?? nextState}`;
+      } else if (data.code === 'INVALID_TRANSITION' && Array.isArray(data.allowedNextStates)) {
+        message = `${data.error}. Allowed next states: ${data.allowedNextStates.join(', ')}`;
+      } else {
+        message = data.error || 'State change failed';
+      }
+    } catch {
+      message = res.ok ? `Moved to ${nextState}` : 'State change failed';
+    }
+
+    setStatus(message);
     await load();
   }
 

@@ -4,12 +4,53 @@ import { prisma } from '@/lib/db';
 import { assertTransition } from '@/lib/events/state-machine';
 import { requireOrgEditor } from '@/lib/auth/guards';
 
+const allowed: Record<EventState, EventState[]> = {
+  DRAFT: ['PUBLISHED', 'CANCELLED'],
+  PUBLISHED: ['REGISTRATION_OPEN', 'DRAFT', 'CANCELLED'],
+  REGISTRATION_OPEN: ['IN_PROGRESS', 'PUBLISHED', 'CANCELLED'],
+  IN_PROGRESS: ['COMPLETED', 'CANCELLED'],
+  COMPLETED: ['ARCHIVED'],
+  ARCHIVED: [],
+  CANCELLED: ['ARCHIVED']
+};
+
 export async function POST(req: NextRequest, { params }: { params: { eventId: string } }) {
   try {
     const { nextState } = (await req.json()) as { nextState: EventState };
     const event = await prisma.event.findUnique({ where: { id: params.eventId } });
-    if (!event) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+    if (!event) return NextResponse.json({ error: 'Event not found', code: 'EVENT_NOT_FOUND' }, { status: 404 });
     const actor = await requireOrgEditor(event.organizationId);
+
+    if (!nextState || !(nextState in allowed)) {
+      return NextResponse.json({ error: 'Invalid next state', code: 'INVALID_NEXT_STATE' }, { status: 400 });
+    }
+
+    if (!allowed[event.state].includes(nextState)) {
+      return NextResponse.json(
+        {
+          error: `Cannot move event from ${event.state} to ${nextState}`,
+          code: 'INVALID_TRANSITION',
+          currentState: event.state,
+          nextState,
+          allowedNextStates: allowed[event.state]
+        },
+        { status: 400 }
+      );
+    }
+
+    if (nextState === 'IN_PROGRESS') {
+      const approvedCount = await prisma.registration.count({ where: { eventId: event.id, status: 'APPROVED' } });
+      if (approvedCount < 2) {
+        return NextResponse.json(
+          {
+            error: `At least 2 approved players are required to start. Current approved players: ${approvedCount}`,
+            code: 'INSUFFICIENT_APPROVED_PLAYERS',
+            approvedCount
+          },
+          { status: 400 }
+        );
+      }
+    }
 
     assertTransition(event.state, nextState);
 
@@ -28,10 +69,12 @@ export async function POST(req: NextRequest, { params }: { params: { eventId: st
       })
     ]);
 
-    return NextResponse.json({ ok: true });
+    return NextResponse.json({ ok: true, fromState: event.state, toState: nextState });
   } catch (e: any) {
     const msg = e?.message || 'error';
-    const status = msg === 'UNAUTHORIZED' ? 401 : 403;
-    return NextResponse.json({ error: msg }, { status });
+    if (msg === 'UNAUTHORIZED') return NextResponse.json({ error: 'Sign in required', code: 'UNAUTHORIZED' }, { status: 401 });
+    if (msg === 'FORBIDDEN') return NextResponse.json({ error: 'You do not have permission to update this event', code: 'FORBIDDEN' }, { status: 403 });
+    if (msg === 'BANNED') return NextResponse.json({ error: 'Your account is banned', code: 'BANNED' }, { status: 403 });
+    return NextResponse.json({ error: msg, code: 'STATE_CHANGE_FAILED' }, { status: 500 });
   }
 }
