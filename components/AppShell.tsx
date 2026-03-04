@@ -19,7 +19,7 @@ export default async function AppShell({ children }: { children: React.ReactNode
           <div className="nav-links">
             <Link className="btn" href="/public">Browse</Link>
             <Link className="btn" href="/dashboard/player">Player</Link>
-            <Link className="btn" href="/dashboard/org">Org</Link>
+            <Link className="btn" href={user ? '/dashboard/org' : '/auth/sign-in/org'}>Org</Link>
             <Link className="btn" href="/dashboard/admin">Admin</Link>
             {user && (
               <form className="row" action="/api/auth/mode" method="post">

@@ -5,6 +5,9 @@ import { createSession } from '@/lib/auth/session';
 
 export async function GET(req: NextRequest) {
   const token = req.nextUrl.searchParams.get('token');
+  const returnTo = req.nextUrl.searchParams.get('returnTo');
+  const safeReturnTo = returnTo && returnTo.startsWith('/') ? returnTo : '/dashboard/player';
+
   if (!token) return NextResponse.redirect(new URL('/auth/sign-in?error=missing-token', req.url));
 
   const record = await prisma.magicLinkToken.findUnique({ where: { tokenHash: sha256(token) } });
@@ -16,5 +19,5 @@ export async function GET(req: NextRequest) {
   await prisma.magicLinkToken.update({ where: { id: record.id }, data: { usedAt: new Date() } });
   await createSession(record.userId);
 
-  return NextResponse.redirect(new URL('/dashboard/player', req.url));
+  return NextResponse.redirect(new URL(safeReturnTo, req.url));
 }

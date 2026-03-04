@@ -7,13 +7,16 @@ export async function POST(req: NextRequest) {
   try {
     const contentType = req.headers.get('content-type') || '';
     let email = '';
+    let returnTo = '';
     if (contentType.includes('application/json')) {
-      ({ email } = await req.json());
+      ({ email, returnTo = '' } = await req.json());
     } else {
       const form = await req.formData();
       email = String(form.get('email') || '');
+      returnTo = String(form.get('returnTo') || '');
     }
     email = email.trim().toLowerCase();
+    returnTo = returnTo.trim();
     if (!email) return NextResponse.json({ error: 'Email required' }, { status: 400 });
 
     const user = await prisma.user.findFirst({ where: { email: { equals: email, mode: 'insensitive' } } });
@@ -30,7 +33,10 @@ export async function POST(req: NextRequest) {
       }
     });
 
-    const magicUrl = `${process.env.APP_URL}/auth/callback?token=${token}`;
+    const callbackUrl = new URL('/auth/callback', process.env.APP_URL);
+    callbackUrl.searchParams.set('token', token);
+    if (returnTo.startsWith('/')) callbackUrl.searchParams.set('returnTo', returnTo);
+    const magicUrl = callbackUrl.toString();
     await sendMagicLinkEmail(email, magicUrl);
 
     return NextResponse.json({ ok: true });
